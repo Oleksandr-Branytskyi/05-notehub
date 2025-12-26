@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import css from "./App.module.css";
 
@@ -9,18 +9,9 @@ import SearchBox from "../SearchBox/SearchBox";
 import Modal from "../Modal/Modal";
 import NoteForm from "../NoteForm/NoteForm";
 
-import { fetchNotes, createNote, deleteNote } from "../../services/noteService";
-import type { NoteTag } from "../../types/note";
-
-interface NoteFormValues {
-  title: string;
-  content: string;
-  tag: NoteTag;
-}
+import { fetchNotes } from "../../services/noteService";
 
 export default function App() {
-  const queryClient = useQueryClient();
-
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,25 +29,6 @@ export default function App() {
     placeholderData: (prev) => prev,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (values: NoteFormValues) =>
-      createNote({
-        title: values.title,
-        content: values.content,
-        tag: values.tag,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteNote(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
@@ -64,15 +36,6 @@ export default function App() {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-
-  const handleCreateNote = async (values: NoteFormValues) => {
-    await createMutation.mutateAsync(values);
-    closeModal();
-  };
-
-  const handleDeleteNote = (id: string) => {
-    deleteMutation.mutate(id);
-  };
 
   const notes = data?.notes ?? [];
   const totalPages = data?.totalPages ?? 0;
@@ -90,12 +53,7 @@ export default function App() {
           />
         )}
 
-        <button
-          className={css.button}
-          type="button"
-          onClick={openModal}
-          disabled={createMutation.isPending}
-        >
+        <button className={css.button} type="button" onClick={openModal}>
           Create note +
         </button>
       </header>
@@ -106,16 +64,10 @@ export default function App() {
 
       {!isError && !isFetching && notes.length === 0 && <p>No notes found.</p>}
 
-      {notes.length > 0 && (
-        <NoteList notes={notes} onDelete={handleDeleteNote} />
-      )}
+      {notes.length > 0 && <NoteList notes={notes} />}
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <NoteForm
-          onCancel={closeModal}
-          onSubmit={handleCreateNote}
-          isSubmitting={createMutation.isPending}
-        />
+        <NoteForm onCancel={closeModal} />
       </Modal>
     </div>
   );

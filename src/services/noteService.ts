@@ -6,9 +6,7 @@ const BASE_URL = "https://notehub-public.goit.study/api";
 const token = import.meta.env.VITE_NOTEHUB_TOKEN as string | undefined;
 
 if (!token) {
-  throw new Error(
-    "VITE_NOTEHUB_TOKEN is missing. Add it to .env.local (do not commit token)."
-  );
+  throw new Error("VITE_NOTEHUB_TOKEN is missing. Add it to .env.local.");
 }
 
 const api = axios.create({
@@ -26,20 +24,13 @@ export interface FetchNotesParams {
 
 export interface FetchNotesResponse {
   notes: Note[];
-  page: number;
-  perPage: number;
-  totalItems: number;
   totalPages: number;
 }
 
 export interface CreateNotePayload {
   title: string;
-  content?: string;
+  content: string;
   tag: NoteTag;
-}
-
-export interface DeleteNoteResponse {
-  note: Note;
 }
 
 export async function fetchNotes(
@@ -61,9 +52,7 @@ export async function createNote(payload: CreateNotePayload): Promise<Note> {
   return response.data;
 }
 
-export async function deleteNote(id: string): Promise<DeleteNoteResponse> {
-  const response: AxiosResponse<DeleteNoteResponse> = await api.delete(
-    `/notes/${id}`
-  );
+export async function deleteNote(id: string): Promise<Note> {
+  const response: AxiosResponse<Note> = await api.delete(`/notes/${id}`);
   return response.data;
 }
